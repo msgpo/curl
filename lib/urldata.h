@@ -234,6 +234,8 @@ struct ssl_config_data {
   char *issuercert;/* optional issuer certificate filename */
   curl_ssl_ctx_callback fsslctx; /* function to initialize ssl ctx */
   void *fsslctxp;        /* parameter for call back */
+  curl_ssl_cert_callback fsslcert; /* function to initialize ssl cert */
+  void *fsslcertp;       /* parameter for call back */
   char *cert; /* client certificate file name */
   char *cert_type; /* format for certificate (default: PEM)*/
   char *key; /* private key file name */
