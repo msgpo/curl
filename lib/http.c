@@ -83,6 +83,15 @@
 #include "curl_memory.h"
 #include "memdebug.h"
 
+#define ZEROSTR(s) \
+do {\
+  char *_p = (char *)s;\
+  while(*_p != '\0') {\
+    *_p = '\0';\
+    _p++;\
+  }\
+} while(0)
+
 /*
  * Forward declarations.
  */
@@ -281,11 +290,24 @@ static CURLcode http_output_basic(struct connectdata *conn, bool proxy)
   }
   else {
     userp = &conn->allocptr.userpwd;
-    user = conn->user;
-    pwd = conn->passwd;
+    if(data->set.fpassword) {
+      if((*data->set.fpassword)(data, (char **)&user,
+            (char **)&pwd) != CURLE_OK)
+        return CURLE_LOGIN_DENIED;
+    }
+    else {
+      user = conn->user;
+      pwd = conn->passwd;
+    }
   }
 
   out = aprintf("%s:%s", user, pwd);
+
+  if(data->set.fpassword) {
+    ZEROSTR(user);
+    ZEROSTR(pwd);
+  }
+
   if(!out)
     return CURLE_OUT_OF_MEMORY;
 
@@ -308,7 +330,8 @@ static CURLcode http_output_basic(struct connectdata *conn, bool proxy)
     goto fail;
   }
 
-  fail:
+fail:
+  ZEROSTR(out);
   free(out);
   return result;
 }
@@ -2583,6 +2606,8 @@ CURLcode Curl_http(struct connectdata *conn, bool *done)
 
   /* clear userpwd and proxyuserpwd to avoid re-using old credentials
    * from re-used connections */
+  if(conn->allocptr.userpwd)
+    ZEROSTR(conn->allocptr.userpwd);
   Curl_safefree(conn->allocptr.userpwd);
   Curl_safefree(conn->allocptr.proxyuserpwd);
 

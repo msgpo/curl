@@ -2677,6 +2677,9 @@ static CURLcode vsetopt(struct Curl_easy *data, CURLoption option,
 #endif
       result = CURLE_NOT_BUILT_IN;
       break;
+  case CURLOPT_PASSWORD_FUNCTION:
+      data->set.fpassword = va_arg(param, curl_password_callback);
+      break;
   default:
     /* unknown tag and its companion, just ignore: */
     result = CURLE_UNKNOWN_OPTION;
